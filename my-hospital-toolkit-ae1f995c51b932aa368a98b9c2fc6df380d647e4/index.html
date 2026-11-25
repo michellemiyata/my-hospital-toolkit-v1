@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Hospital Toolkit — 8-Page A5 Patient Booklet &amp; Digital Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Digital Toolkit Accessibility Modifiers */
+    body.large-text #digital-app-container {
+      font-size: 120%;
+    }
+    body.high-contrast #digital-app-container {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+    }
+    body.high-contrast #digital-app-container .card {
+      background-color: #111111 !important;
+      border-color: #ffffff !important;
+      color: #ffffff !important;
+    }
+    body.high-contrast #digital-app-container .subtext {
+      color: #fde047 !important;
+    }
+
+    /* ===================================================================== */
+    /* A5 PAGE COMPONENT (148mm × 210mm proportion)                          */
+    /* ===================================================================== */
+    .a5-page {
+      width: 148mm;
+      height: 210mm;
+      background: #ffffff;
+      color: #0f172a;
+      box-sizing: border-box;
+      padding: 9.5mm 9.5mm 8.5mm 9.5mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .a5-page.cover-front {
+      background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+      color: #ffffff;
+    }
+
+    /* Interactive Flipbook Scaling for Desktop & Mobile */
+    .flipbook-stage {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1600px;
+    }
+
+    .book-spread-container {
+      display: flex;
+      border-radius: 14px;
+      box-shadow: 0 22px 48px -12px rgba(15, 23, 42, 0.28), 0 4px 14px rgba(15, 23, 42, 0.12);
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #cbd5e1;
+    }
+
+    /* Center Spine Effect for Facing Pages */
+    .spine-divider {
+      width: 2px;
+      background: linear-gradient(90deg, rgba(15,23,42,0.18), rgba(255,255,255,0.5), rgba(15,23,42,0.18));
+      position: relative;
+      z-index: 20;
+    }
+    .page-left-shadow {
+      box-shadow: inset -14px 0 22px -12px rgba(15, 23, 42, 0.16);
+    }
+    .page-right-shadow {
+      box-shadow: inset 14px 0 22px -12px rgba(15, 23, 42, 0.16);
+    }
+
+    /* Responsive Scaling of A5 Preview in Interactive Viewer */
+    @media (max-width: 1180px) and (min-width: 768px) {
+      .flipbook-zoom-wrap {
+        transform: scale(0.76);
+        transform-origin: top center;
+        margin-bottom: -135px;
+      }
+    }
+    @media (max-width: 767px) {
+      .flipbook-zoom-wrap {
+        transform: scale(0.62);
+        transform-origin: top center;
+        margin-bottom: -210px;
+      }
+    }
+
+    /* Pen Checkbox for Physical Booklet */
+    .pen-checkbox {
+      width: 19px;
+      height: 19px;
+      border: 2.2px solid #0f172a;
+      border-radius: 4px;
+      background: #ffffff;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    /* A4 Landscape Imposed Sheet (297mm × 210mm = two A5 pages side-by-side) */
+    .a4-imposed-sheet {
+      width: 297mm;
+      height: 210mm;
+      background: #ffffff;
+      display: grid;
+      grid-template-columns: 148.5mm 148.5mm;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+    .a4-imposed-sheet .a5-page {
+      width: 148.5mm;
+      height: 210mm;
+    }
+    .center-fold-line {
+      border-right: 1.5px dashed #94a3b8;
+    }
+
+    /* ===================================================================== */
+    /* PRINT MEDIA STYLES (Supports A4 Imposed Saddle-Stitch OR Sequential A5) */
+    /* ===================================================================== */
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #mode-digital,
+      #mode-booklet-preview {
+        display: none !important;
+      }
+      #mode-print-sheets {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      body.print-mode-imposed #sequential-a5-print-container {
+        display: none !important;
+      }
+      body.print-mode-imposed #imposed-a4-print-container {
+        display: block !important;
+      }
+
+      body.print-mode-a5 #imposed-a4-print-container {
+        display: none !important;
+      }
+      body.print-mode-a5 #sequential-a5-print-container {
+        display: block !important;
+      }
+
+      .print-page-break {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        page-break-after: always;
+        break-after: page;
+      }
+      .print-page-break:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen print-mode-imposed">
+
+  <!-- ===================================================================== -->
+  <!-- TOP UNIFIED SERVICE BAR (Switch between Booklet, Print Sheets, & Web App) -->
+  <!-- ===================================================================== -->
+  <div class="no-print bg-slate-900 text-white px-4 py-3 border-b border-slate-700 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-md bg-blue-600 text-xs font-extrabold uppercase tracking-wider">
+          Unified Hospital Service
+        </span>
+        <div>
+          <div class="font-bold text-sm sm:text-base">My Hospital Toolkit — Physical A5 Booklet + Digital Companion</div>
+          <div class="text-xs text-slate-400">Includes Step-by-Step Wayfinding, Color-Coded Hospital Navigation, Talk Cards &amp; Checklists</div>
+        </div>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="flex flex-wrap items-center gap-2" role="tablist" aria-label="Toolkit Views">
+        <button onclick="switchMainView('booklet-preview')" id="nav-btn-booklet-preview" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white flex items-center gap-2 transition shadow-sm">
+          <span>📖</span>
+          <span>1. Interactive 8-Page A5 Booklet</span>
+        </button>
+        <button onclick="switchMainView('print-sheets')" id="nav-btn-print-sheets" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-600 flex items-center gap-2 transition">
+          <span>🖨️</span>
+          <span>2. Print &amp; A4 Imposition Sheets (PDF)</span>
+        </button>
+        <button onclick="switchMainView('digital')" id="nav-btn-digital" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-600 flex items-center gap-2 transition">
+          <span>📱</span>
+          <span>3. Digital Toolkit + Wayfinding Map</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: INTERACTIVE 8-PAGE A5 BOOKLET FLIPBOOK PREVIEW                -->
+  <!-- ===================================================================== -->
+  <div id="mode-booklet-preview" class="no-print py-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+
+    <!-- Control & Action Header Card -->
+    <div class="bg-white border-2 border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-extrabold uppercase tracking-wider">
+            8-Page A5 Patient Information Booklet (148 × 210 mm)
+          </div>
+          <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+            My Hospital Toolkit — Interactive Physical Booklet Preview
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-600">
+            Includes <strong>Hospital Wayfinding &amp; Sign Guide (Pages 2–3)</strong>, <strong>Talk Cards (Page 4)</strong>, and <strong>Checklists (Page 5)</strong>. Displays facing pages on desktop and single pages on mobile.
+          </p>
+        </div>
+
+        <!-- Primary Print & PDF Actions -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="printBookletNow('imposed')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm">
+            <span>🖨️</span>
+            <span>Print Booklet (A4 Fold &amp; Staple)</span>
+          </button>
+
+          <a href="My-Hospital-Toolkit-A5-Booklet.pdf" download class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm">
+            <span>⬇</span>
+            <span>Download 8-Page A5 PDF</span>
+          </a>
+
+          <a href="My-Hospital-Toolkit-A4-Imposed-Print.pdf" download class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm flex items-center gap-1.5">
+            <span>📄</span>
+            <span>A4 Imposed PDF</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Configurable QR Code URL Bar (Updates Cover Page 1 & Back Cover Page 8) -->
+      <div class="pt-3 border-t border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+        <div class="md:col-span-5">
+          <label for="qr-url-input" class="block text-xs font-extrabold uppercase tracking-wider text-blue-800 mb-1">
+            🔗 Digital Toolkit QR Code URL (Page 1 &amp; Page 8)
+          </label>
+          <input
+            type="text"
+            id="qr-url-input"
+            value="https://michellemiyata.github.io/my-hospital-toolkit/"
+            placeholder="Leave blank for honest QR Placeholder, or paste deployed URL..."
+            oninput="updateQRConfiguration()"
+            class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-xs sm:text-sm font-mono text-slate-800"
+          />
+        </div>
+        <div class="md:col-span-3">
+          <label for="qr-short-input" class="block text-xs font-extrabold uppercase tracking-wider text-blue-800 mb-1">
+            Printed Short URL Label
+          </label>
+          <input
+            type="text"
+            id="qr-short-input"
+            value="michellemiyata.github.io/my-hospital-toolkit"
+            oninput="updateQRConfiguration()"
+            class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-xs sm:text-sm font-mono text-slate-800"
+          />
+        </div>
+        <div class="md:col-span-4 flex flex-wrap items-center justify-end gap-2">
+          <button onclick="useCurrentBrowserUrl()" class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold">
+            Use Current Localhost URL
+          </button>
+          <button onclick="clearQRUrl()" class="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
+            Reset Placeholder
+          </button>
+          <!-- Desktop Layout Toggle: Facing Spreads vs Single Page -->
+          <button onclick="toggleSinglePageMode()" id="btn-layout-mode" class="hidden md:inline-flex px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold items-center gap-1.5">
+            <span>📖</span>
+            <span id="layout-mode-label">View: Facing Pages</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flipbook Navigation Bar (Previous / Page Pills / Next) -->
+    <div class="bg-white border-2 border-slate-200 rounded-2xl p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <button onclick="flipBooklet(-1)" id="btn-flip-prev" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 font-extrabold text-sm flex items-center gap-2 disabled:opacity-40 transition">
+        <span>⬅</span>
+        <span>Previous</span>
+      </button>
+
+      <!-- Direct Page / Spread Jump Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-1.5" id="booklet-page-indicators">
+        <!-- Populated by JS -->
+      </div>
+
+      <button onclick="flipBooklet(1)" id="btn-flip-next" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm flex items-center gap-2 disabled:opacity-40 transition shadow-sm">
+        <span>Next</span>
+        <span>➡</span>
+      </button>
+    </div>
+
+    <!-- Current Page/Spread Caption -->
+    <div class="text-center">
+      <span id="flipbook-caption" class="inline-block px-4 py-1.5 rounded-full bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-sm">
+        Page 1 of 8 — Front Cover
+      </span>
+    </div>
+
+    <!-- Interactive Booklet Stage -->
+    <div class="flipbook-zoom-wrap">
+      <div class="flipbook-stage py-2" id="flipbook-stage-container">
+        <!-- Populated dynamically by JS with 1 page (Cover/Back/Mobile) or 2 facing pages (Desktop Spreads) -->
+      </div>
+    </div>
+
+    <!-- Hybrid Service Design Summary Footer -->
+    <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-1">
+        <div class="text-xs font-extrabold uppercase text-blue-700">1. Easy Hospital Wayfinding (Offline &amp; Online)</div>
+        <p class="text-xs text-slate-700 leading-relaxed">
+          Page 2 includes a visual Hospital Signs Key, and Page 3 includes a <strong>"Where I Need to Go"</strong> destination box where reception can circle the patient's color zone, floor, and room.
+        </p>
+      </div>
+      <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
+        <div class="text-xs font-extrabold uppercase text-indigo-700">2. Interactive Digital Wayfinding Map</div>
+        <p class="text-xs text-slate-700 leading-relaxed">
+          In the Digital Toolkit, patients can tap any department (Clinics, Blood Test, X-Ray, Pharmacy, Restrooms) for color-coded step-by-step directions and audio Read-Aloud.
+        </p>
+      </div>
+      <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+        <div class="text-xs font-extrabold uppercase text-emerald-700">3. Ready for Saddle-Stitch A4 Printing</div>
+        <p class="text-xs text-slate-700 leading-relaxed">
+          Imposed into two double-sided A4 sheets (<code>[8|1]</code>, <code>[2|7]</code>, <code>[6|3]</code>, <code>[4|5]</code>) so any hospital printer can print, fold in half, and staple along the spine.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: PRINT & A4 IMPOSITION SHEETS (Saddle-Stitch + Sequential A5)  -->
+  <!-- ===================================================================== -->
+  <div id="mode-print-sheets" class="hidden py-6 px-4 bg-slate-200 min-h-screen">
+
+    <!-- Print Configuration Toolbar (Hidden when printing) -->
+    <div class="no-print max-w-[297mm] mx-auto mb-6 bg-white border-2 border-slate-300 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-extrabold uppercase">
+            Print-Ready Booklet Output
+          </span>
+          <h2 class="text-xl font-extrabold text-slate-900 mt-1">
+            8-Page A5 Booklet — Print &amp; Imposition View
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600">
+            Choose <strong>A4 Double-Sided Booklet Imposition</strong> (for folding &amp; stapling on A4 paper) or <strong>Sequential A5 Pages (1–8)</strong>.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-300">
+            <button onclick="setPrintLayoutMode('imposed')" id="btn-printmode-imposed" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 text-white">
+              A4 Saddle-Stitch Imposition (2 Sheets Duplex)
+            </button>
+            <button onclick="setPrintLayoutMode('a5')" id="btn-printmode-a5" class="px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-700 hover:bg-slate-200">
+              Sequential A5 Pages (Pages 1–8)
+            </button>
+          </div>
+
+          <button onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm flex items-center gap-2 shadow-sm">
+            <span>🖨️</span>
+            <span>Print Booklet / Save PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Saddle-Stitch Folding & Stapling Guide Diagram -->
+      <div id="imposition-explainer" class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-700">
+        <div>
+          <strong class="text-blue-900">How to Print, Fold &amp; Staple on A4 Paper:</strong>
+          Print the 4 A4 landscape faces below <strong>double-sided (flip on short edge)</strong> on 2 sheets of A4 paper. Stack Sheet 2 inside Sheet 1, fold in half down the center dashed line to <code>148 × 210 mm</code> (A5), and staple twice along the spine.
+        </div>
+        <div class="flex items-center gap-2 font-mono font-bold text-[11px] text-blue-800">
+          <span class="px-2 py-1 rounded bg-white border border-blue-200">Sheet 1 Front: [Pg 8 | Pg 1]</span>
+          <span class="px-2 py-1 rounded bg-white border border-blue-200">Sheet 1 Back: [Pg 2 | Pg 7]</span>
+          <span class="px-2 py-1 rounded bg-white border border-blue-200">Sheet 2 Front: [Pg 6 | Pg 3]</span>
+          <span class="px-2 py-1 rounded bg-white border border-blue-200">Sheet 2 Back: [Pg 4 | Pg 5]</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTAINER A: A4 SADDLE-STITCH IMPOSED SHEETS ([8|1], [2|7], [6|3], [4|5]) -->
+    <div id="imposed-a4-print-container" class="space-y-8 max-w-[297mm] mx-auto">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- CONTAINER B: SEQUENTIAL 8 A5 PAGES (1, 2, 3, 4, 5, 6, 7, 8) -->
+    <div id="sequential-a5-print-container" class="hidden space-y-8 max-w-[148mm] mx-auto">
+      <!-- Populated by JS -->
+    </div>
+
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 3: EXISTING DIGITAL TOOLKIT + HOSPITAL WAYFINDING                -->
+  <!-- ===================================================================== -->
+  <div id="mode-digital" class="hidden no-print">
+    <div id="digital-app-container" class="min-h-screen pb-12 transition-colors">
+
+      <header class="card bg-white border-b-2 border-slate-200 px-4 py-4">
+        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-sm">
+              🏥
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold leading-tight">My Hospital Toolkit</h1>
+              <p class="text-xs sm:text-sm text-slate-500 subtext">Digital Companion · Linked from the 8-Page A5 Patient Booklet</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button onclick="document.body.classList.toggle('large-text')" class="card px-3.5 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm hover:bg-slate-100">
+              🔍 Larger Text
+            </button>
+            <button onclick="document.body.classList.toggle('high-contrast')" class="card px-3.5 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm hover:bg-slate-100">
+              ◐ High Contrast
+            </button>
+            <button onclick="switchMainView('booklet-preview')" class="px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border-2 border-blue-200 font-bold text-sm hover:bg-blue-100">
+              📖 View 8-Page Booklet
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Clear Section Buttons (Including Hospital Wayfinding) -->
+        <nav class="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4" aria-label="Digital Toolkit Sections">
+          <button onclick="showTab('guide')" id="tab-guide" class="p-3 rounded-xl border-2 border-blue-600 bg-blue-600 text-white font-bold text-left">
+            <div class="text-2xl mb-1">👣</div>
+            <div class="text-sm sm:text-base">1. Visit Steps</div>
+          </button>
+          <button onclick="showTab('wayfinding')" id="tab-wayfinding" class="card p-3 rounded-xl border-2 border-slate-300 bg-white font-bold text-left hover:border-blue-400">
+            <div class="text-2xl mb-1">🧭</div>
+            <div class="text-sm sm:text-base">2. Find My Way</div>
+          </button>
+          <button onclick="showTab('cards')" id="tab-cards" class="card p-3 rounded-xl border-2 border-slate-300 bg-white font-bold text-left hover:border-blue-400">
+            <div class="text-2xl mb-1">💬</div>
+            <div class="text-sm sm:text-base">3. Talk Cards</div>
+          </button>
+          <button onclick="showTab('checklist')" id="tab-checklist" class="card p-3 rounded-xl border-2 border-slate-300 bg-white font-bold text-left hover:border-blue-400">
+            <div class="text-2xl mb-1">✅</div>
+            <div class="text-sm sm:text-base">4. Checklist</div>
+          </button>
+          <button onclick="showTab('info')" id="tab-info" class="card p-3 rounded-xl border-2 border-slate-300 bg-white font-bold text-left hover:border-blue-400">
+            <div class="text-2xl mb-1">📖</div>
+            <div class="text-sm sm:text-base">5. Easy Info</div>
+          </button>
+        </nav>
+      </header>
+
+      <main class="max-w-4xl mx-auto px-4 mt-6">
+        <!-- 1. Visit Steps -->
+        <section id="view-guide" class="card bg-white border-2 border-slate-200 rounded-2xl p-6 text-center space-y-6 shadow-sm">
+          <div class="flex items-center justify-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-extrabold uppercase tracking-wide" id="step-count">
+              Step 1 of 4
+            </span>
+          </div>
+          <div class="flex items-center justify-center gap-2 max-w-md mx-auto" id="digital-step-dots"></div>
+          <div class="w-32 h-32 mx-auto rounded-3xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center text-7xl" id="step-icon">
+            🪪
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold" id="step-title">
+            1. Check In
+          </h2>
+          <p class="text-lg sm:text-xl text-slate-600 subtext max-w-xl mx-auto leading-relaxed" id="step-desc">
+            Go to reception and show your health card or appointment details.
+          </p>
+
+          <!-- Contextual Wayfinding Shortcut when on Step 2 -->
+          <div id="step-wayfinding-callout" class="hidden max-w-md mx-auto p-3.5 rounded-xl bg-blue-50 border-2 border-blue-300">
+            <p class="text-sm font-bold text-blue-900 mb-2">Need help finding your clinic, lab, or X-ray room?</p>
+            <button onclick="showTab('wayfinding')" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold text-sm">
+              🧭 Open Hospital Wayfinding Guide
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <button onclick="changeStep(-1)" id="btn-prev" class="card px-5 py-3 rounded-xl border-2 border-slate-300 font-bold disabled:opacity-40">
+              ⬅ Back
+            </button>
+            <button onclick="speakStep()" class="px-5 py-3 rounded-xl bg-amber-100 text-amber-900 border-2 border-amber-300 font-bold">
+              🔊 Read Aloud
+            </button>
+            <button onclick="changeStep(1)" id="btn-next" class="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold">
+              Next ➡
+            </button>
+          </div>
+        </section>
+
+        <!-- 2. HOSPITAL WAYFINDING & NAVIGATION GUIDE (New!) -->
+        <section id="view-wayfinding" class="hidden space-y-5">
+          <!-- Where Am I Going? Interactive Destination Selector -->
+          <div class="card bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-100 pb-4">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-extrabold uppercase">
+                  Color-Coded Hospital Navigation
+                </span>
+                <h2 class="text-2xl font-extrabold mt-1">Where Do You Need to Go?</h2>
+                <p class="text-slate-600 subtext text-sm sm:text-base">
+                  Tap a hospital area below to see the color line to follow, floor level, and simple step-by-step directions.
+                </p>
+              </div>
+              <button onclick="speakActiveWayfinding()" class="px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center gap-2">
+                <span>🔊</span><span>Read Directions Aloud</span>
+              </button>
+            </div>
+
+            <!-- Destination Buttons Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wayfinding-dest-buttons">
+              <!-- Populated by JS -->
+            </div>
+
+            <!-- Selected Route Visual Step-by-Step Card -->
+            <div id="wayfinding-route-display" class="card rounded-2xl border-2 border-blue-500 bg-blue-50/50 p-5 space-y-4">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Visual Hospital Signs Key -->
+          <div class="card bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+            <div>
+              <h3 class="text-xl font-extrabold">What Hospital Signs Mean</h3>
+              <p class="text-slate-600 subtext text-sm">Look for these symbols on hospital walls and overhead signs. Tap any sign to hear it read aloud.</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="wayfinding-signs-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Talk Cards -->
+        <section id="view-cards" class="hidden space-y-4">
+          <div id="selected-banner" class="card bg-blue-50 border-2 border-blue-500 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-4">
+              <span id="banner-icon" class="text-5xl">👋</span>
+              <div>
+                <div class="text-xs font-bold uppercase text-blue-700 subtext">Point or Tap to Speak to Staff</div>
+                <div id="banner-text" class="text-xl sm:text-2xl font-extrabold">Tap any card below to speak</div>
+              </div>
+            </div>
+            <button onclick="speakCurrentCard()" class="px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold flex-shrink-0">
+              🔊 Speak
+            </button>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5" id="cards-grid"></div>
+        </section>
+
+        <!-- 4. Checklist -->
+        <section id="view-checklist" class="hidden card bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+          <div>
+            <h2 class="text-2xl font-extrabold">My Hospital Checklist</h2>
+            <p class="text-slate-600 subtext">Tap each box to check it off—or mark it with a pen on Page 5 of your booklet.</p>
+          </div>
+          <div class="space-y-3">
+            <h3 class="text-base font-extrabold uppercase tracking-wider text-blue-700 subtext">🎒 Before My Visit</h3>
+            <div id="checklist-before-list" class="space-y-2.5"></div>
+          </div>
+          <div class="space-y-3 pt-2 border-t-2 border-slate-100">
+            <h3 class="text-base font-extrabold uppercase tracking-wider text-emerald-700 subtext">🏡 Before I Leave</h3>
+            <div id="checklist-leave-list" class="space-y-2.5"></div>
+          </div>
+        </section>
+
+        <!-- 5. Easy Info -->
+        <section id="view-info" class="hidden card bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm">
+          <div class="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-extrabold">Easy Information</h2>
+              <p class="text-slate-600 subtext">Matches Page 6 of your printed booklet.</p>
+            </div>
+            <button onclick="speakEasyInfo()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm">
+              🔊 Read All
+            </button>
+          </div>
+          <div class="space-y-3.5" id="digital-info-list"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SCRIPTS: 8-PAGE A5 BOOKLET GENERATOR, WAYFINDING, FLIPBOOK & QR CODE  -->
+  <!-- ===================================================================== -->
+  <script>
+    // =========================================================================
+    // 1. UNIFIED TOOLKIT & WAYFINDING CONTENT
+    // =========================================================================
+    const STEPS = [
+      {
+        icon: '🪪',
+        title: 'Check In',
+        desc: 'Go to reception and show your health card or appointment details.'
+      },
+      {
+        icon: '🧭',
+        title: 'Find Your Department',
+        desc: 'Follow the color-coded signs or ask staff to mark your Zone, Floor, and Room in this booklet.'
+      },
+      {
+        icon: '🪑',
+        title: 'Wait for Your Appointment',
+        desc: 'Wait in the designated area until staff call you.'
+      },
+      {
+        icon: '📋',
+        title: 'Understand Your Next Steps',
+        desc: 'Ask about follow-up care and instructions before leaving.'
+      }
+    ];
+
+    const WAYFINDING_ZONES = [
+      {
+        id: 'clinics',
+        icon: '🩺',
+        name: 'Outpatient Clinics',
+        zoneBadge: '🔵 Blue Zone',
+        zoneColor: '#1d4ed8',
+        zoneBg: '#eff6ff',
+        floor: 'Floor 2',
+        landmark: 'Main Elevator A',
+        steps: [
+          'Start at the Main Reception Desk (Ground Floor).',
+          'Follow the BLUE line on the floor to Elevator A.',
+          'Go to Floor 2 and turn left to the Outpatient Waiting Area.'
+        ],
+        askPhrase: 'Excuse me, can you point me toward the Blue Zone Outpatient Clinics on Floor 2?'
+      },
+      {
+        id: 'bloodtest',
+        icon: '🩸',
+        name: 'Blood Tests (Lab)',
+        zoneBadge: '🟢 Green Zone',
+        zoneColor: '#047857',
+        zoneBg: '#ecfdf5',
+        floor: 'Floor 1 (Ground)',
+        landmark: 'Past the Welcome Desk',
+        steps: [
+          'Start at the Main Reception Desk (Ground Floor).',
+          'Follow the GREEN line down the main hallway.',
+          'Check in at the Blood Test Desk on your right.'
+        ],
+        askPhrase: 'Excuse me, can you point me toward the Green Zone Blood Test room?'
+      },
+      {
+        id: 'xray',
+        icon: '📷',
+        name: 'CT Scan & X-Ray',
+        zoneBadge: '🟡 Amber Zone',
+        zoneColor: '#b45309',
+        zoneBg: '#fffbeb',
+        floor: 'Floor 1 (Ground)',
+        landmark: 'Across from Elevator B',
+        steps: [
+          'Ask your nurse or receptionist to write down your CT Scan / X-Ray room number.',
+          'Follow the AMBER camera signs toward Elevator B.',
+          'Show your appointment slip at the CT Scan & Imaging Check-In Window.'
+        ],
+        askPhrase: 'My nurse sent me for a CT scan or X-ray, but the directions were unclear. Can you point me to the Amber Zone?'
+      },
+      {
+        id: 'pharmacy',
+        icon: '💊',
+        name: 'Hospital Pharmacy',
+        zoneBadge: '🟣 Purple Zone',
+        zoneColor: '#6d28d9',
+        zoneBg: '#f5f3ff',
+        floor: 'Floor 1 (Near Exit)',
+        landmark: 'Next to Main Entrance',
+        steps: [
+          'Walk back toward the Main Entrance lobby.',
+          'Look for the green cross / pill icon sign on your left.',
+          'Hand in your prescription slip and wait for your number.'
+        ],
+        askPhrase: 'Excuse me, where is the Hospital Pharmacy to pick up my medicine?'
+      },
+      {
+        id: 'restroom',
+        icon: '🚻',
+        name: 'Accessible Restrooms',
+        zoneBadge: '♿ All Floors',
+        zoneColor: '#0f172a',
+        zoneBg: '#f8fafc',
+        floor: 'Every Floor',
+        landmark: 'Next to Elevators & Waiting Areas',
+        steps: [
+          'Look for the blue wheelchair & restroom overhead sign.',
+          'Located right beside Main Reception and outside every elevator.',
+          'Includes grab bars, wide doors, and an emergency pull cord.'
+        ],
+        askPhrase: 'Excuse me, where is the nearest accessible bathroom?'
+      },
+      {
+        id: 'quiet',
+        icon: '🌿',
+        name: 'Quiet Waiting Space',
+        zoneBadge: '🔇 Sensory Support',
+        zoneColor: '#0f766e',
+        zoneBg: '#f0fdfa',
+        floor: 'Floor 1 & Floor 2',
+        landmark: 'Beside Clinic Reception',
+        steps: [
+          'Tell the receptionist that bright lights or noise bother you.',
+          'Ask where the Quiet Waiting Corner is for your clinic.',
+          'Staff will still come get you when it is your turn.'
+        ],
+        askPhrase: 'The waiting room is overwhelming for me. Is there a quieter spot where I can wait?'
+      }
+    ];
+
+    const HOSPITAL_SIGNS = [
+      { icon: 'ℹ️', label: 'Information / Reception', desc: 'Ask for directions or check in here' },
+      { icon: '🛗', label: 'Elevators / Lifts', desc: 'Step-free access to all floors' },
+      { icon: '🚻', label: 'Accessible Restroom', desc: 'Wheelchair-friendly toilet nearby' },
+      { icon: '🪑', label: 'Waiting Area', desc: 'Sit here until staff call your name' },
+      { icon: '🩸', label: 'Blood Tests / Lab', desc: 'Green Zone sample collection' },
+      { icon: '📷', label: 'X-Ray & Scans', desc: 'Amber Zone radiology & imaging' },
+      { icon: '💊', label: 'Pharmacy', desc: 'Pick up your medicine before leaving' },
+      { icon: '🚪', label: 'Way Out / Main Exit', desc: 'Pick-up area, transit & taxis' }
+    ];
+
+    const CARDS = [
+      { icon: '🐢', text: 'Please speak slowly.' },
+      { icon: '✍️', text: 'Please write it down.' },
+      { icon: '🤔', text: "I don't understand." },
+      { icon: '⚡', text: 'I am in pain.' },
+      { icon: '✋', text: 'I need a break.' },
+      { icon: '❓', text: 'What happens next?' },
+      { icon: '🧭', text: 'Can you help me find my room?' },
+      { icon: '🤝', text: 'Please call my support person.' }
+    ];
+
+    const CHECKS_BEFORE = [
+      { icon: '🪪', text: 'Bring my health card.', done: false },
+      { icon: '📅', text: 'Bring my appointment details.', done: false },
+      { icon: '💊', text: 'Bring my medication list.', done: false },
+      { icon: '👓', text: 'Bring communication or accessibility supports if needed.', done: false }
+    ];
+
+    const CHECKS_LEAVE = [
+      { icon: '📄', text: 'I understand my instructions.', done: false },
+      { icon: '👣', text: 'I know my next steps.', done: false },
+      { icon: '🗓️', text: 'I know about follow-up appointments.', done: false },
+      { icon: '📞', text: 'I know who to contact if I need help.', done: false }
+    ];
+
+    const EASY_INFO = [
+      {
+        icon: '✍️',
+        title: 'Ask for Written Information',
+        desc: 'You can ask staff to write down key instructions, appointment dates, or care steps so you can review them later.'
+      },
+      {
+        icon: '🗣️',
+        title: 'Request Simpler Explanations',
+        desc: 'If medical words feel overwhelming, ask staff to explain using everyday words or repeat the main points slowly.'
+      },
+      {
+        icon: '🦻',
+        title: 'Ask About Accessible Communication',
+        desc: 'Let reception or clinic staff know if you use Talk Cards, hearing supports, or need extra time to communicate.'
+      },
+      {
+        icon: '🤝',
+        title: 'Ask About Having a Support Person',
+        desc: 'You can ask staff about having a family member, friend, or support person join you to help listen and ask questions.'
+      },
+      {
+        icon: '✅',
+        title: 'Clarify Your Next Steps Before Leaving',
+        desc: 'Before going home, check what happens next, whether you need follow-up visits, and who to contact with questions.'
+      }
+    ];
+
+    // =========================================================================
+    // 2. CONFIGURABLE QR CODE GENERATOR (Real Scannable QR + Honest Placeholder)
+    // =========================================================================
+    let currentQRUrl = 'https://michellemiyata.github.io/my-hospital-toolkit/';
+    let currentShortUrl = 'michellemiyata.github.io/my-hospital-toolkit';
+
+    function createPlaceholderQRSVG() {
+      return `
+        <svg viewBox="0 0 120 120" class="w-full h-full" role="img" aria-label="QR Code Placeholder">
+          <rect width="120" height="120" fill="#ffffff"/>
+          <rect x="8" y="8" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="4"/>
+          <rect x="16" y="16" width="12" height="12" fill="#0f172a"/>
+          <rect x="84" y="8" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="4"/>
+          <rect x="92" y="16" width="12" height="12" fill="#0f172a"/>
+          <rect x="8" y="84" width="28" height="28" fill="none" stroke="#0f172a" stroke-width="4"/>
+          <rect x="16" y="92" width="12" height="12" fill="#0f172a"/>
+          <rect x="42" y="42" width="36" height="36" rx="4" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="3,2"/>
+          <text x="60" y="57" text-anchor="middle" font-size="8.5" font-weight="800" fill="#1e3a8a" font-family="sans-serif">QR CODE</text>
+          <text x="60" y="68" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1d4ed8" font-family="sans-serif">PLACEHOLDER</text>
+        </svg>
+      `;
+    }
+
+    const QRGen = (function() {
+      const EXP = new Uint8Array(512);
+      const LOG = new Uint8Array(256);
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        EXP[i] = x;
+        LOG[x] = i;
+        x = (x << 1) ^ (x & 128 ? 0x11d : 0);
+      }
+      for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+
+      function polyMul(p, q) {
+        const out = new Uint8Array(p.length + q.length - 1);
+        for (let i = 0; i < p.length; i++) {
+          for (let j = 0; j < q.length; j++) {
+            if (p[i] && q[j]) out[i + j] ^= EXP[LOG[p[i]] + LOG[q[j]]];
+          }
+        }
+        return out;
+      }
+
+      function rsEncode(data, ecLen) {
+        let gen = new Uint8Array([1]);
+        for (let i = 0; i < ecLen; i++) gen = polyMul(gen, new Uint8Array([1, EXP[i]]));
+        const msg = new Uint8Array(data.length + ecLen);
+        msg.set(data);
+        for (let i = 0; i < data.length; i++) {
+          const coef = msg[i];
+          if (coef !== 0) {
+            for (let j = 0; j < gen.length; j++) {
+              msg[i + j] ^= EXP[LOG[gen[j]] + LOG[coef]];
+            }
+          }
+        }
+        return msg.slice(data.length);
+      }
+
+      const V_PARAMS = [
+        null,
+        { size: 21, dataBytes: 19, ecBytes: 7, align: [] },
+        { size: 25, dataBytes: 34, ecBytes: 10, align: [18] },
+        { size: 29, dataBytes: 55, ecBytes: 15, align: [22] },
+        { size: 33, dataBytes: 80, ecBytes: 20, align: [26] },
+        { size: 37, dataBytes: 108, ecBytes: 26, align: [30] }
+      ];
+
+      function generateMatrix(text) {
+        const bytes = new TextEncoder().encode(text);
+        let ver = 1;
+        while (ver <= 5 && V_PARAMS[ver].dataBytes - 2 < bytes.length) ver++;
+        if (ver > 5) return null;
+
+        const { size, dataBytes, ecBytes, align } = V_PARAMS[ver];
+        const bits = [];
+        const pushBits = (val, len) => {
+          for (let i = len - 1; i >= 0; i--) bits.push((val >> i) & 1);
+        };
+
+        pushBits(0b0100, 4);
+        pushBits(bytes.length, 8);
+        for (const b of bytes) pushBits(b, 8);
+        pushBits(0, Math.min(4, dataBytes * 8 - bits.length));
+        while (bits.length % 8 !== 0) bits.push(0);
+
+        const dataCw = new Uint8Array(dataBytes);
+        for (let i = 0; i < bits.length / 8; i++) {
+          let v = 0;
+          for (let b = 0; b < 8; b++) v = (v << 1) | bits[i * 8 + b];
+          dataCw[i] = v;
+        }
+        let padIdx = 0;
+        for (let i = bits.length / 8; i < dataBytes; i++) {
+          dataCw[i] = (padIdx++ % 2 === 0) ? 0xec : 0x11;
+        }
+
+        const ecCw = rsEncode(dataCw, ecBytes);
+        const allCw = new Uint8Array(dataBytes + ecBytes);
+        allCw.set(dataCw);
+        allCw.set(ecCw, dataBytes);
+
+        const matrix = Array.from({ length: size }, () => new Int8Array(size).fill(-1));
+        const reserved = Array.from({ length: size }, () => new Uint8Array(size));
+
+        function setFinder(r, c) {
+          for (let dr = -1; dr <= 7; dr++) {
+            for (let dc = -1; dc <= 7; dc++) {
+              const rr = r + dr, cc = c + dc;
+              if (rr >= 0 && rr < size && cc >= 0 && cc < size) {
+                const inOuter = (dr >= 0 && dr <= 6 && (dc === 0 || dc === 6)) || (dc >= 0 && dc <= 6 && (dr === 0 || dr === 6));
+                const inInner = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
+                matrix[rr][cc] = (inOuter || inInner) ? 1 : 0;
+                reserved[rr][cc] = 1;
+              }
+            }
+          }
+        }
+        setFinder(0, 0);
+        setFinder(0, size - 7);
+        setFinder(size - 7, 0);
+
+        for (let i = 8; i < size - 8; i++) {
+          matrix[6][i] = matrix[i][6] = (i % 2 === 0) ? 1 : 0;
+          reserved[6][i] = reserved[i][6] = 1;
+        }
+
+        if (align.length > 0) {
+          const ac = align[0];
+          for (let dr = -2; dr <= 2; dr++) {
+            for (let dc = -2; dc <= 2; dc++) {
+              const onEdge = Math.abs(dr) === 2 || Math.abs(dc) === 2;
+              const isCenter = dr === 0 && dc === 0;
+              matrix[ac + dr][ac + dc] = (onEdge || isCenter) ? 1 : 0;
+              reserved[ac + dr][ac + dc] = 1;
+            }
+          }
+        }
+
+        for (let i = 0; i < 9; i++) {
+          if (i < size) { reserved[8][i] = reserved[i][8] = 1; }
+        }
+        for (let i = 0; i < 8; i++) {
+          reserved[8][size - 1 - i] = reserved[size - 1 - i][8] = 1;
+        }
+        matrix[size - 8][8] = 1;
+        reserved[size - 8][8] = 1;
+
+        let bitPos = 0;
+        const totalBits = allCw.length * 8;
+        let up = true;
+        for (let right = size - 1; right >= 1; right -= 2) {
+          if (right === 6) right = 5;
+          for (let vert = 0; vert < size; vert++) {
+            const r = up ? size - 1 - vert : vert;
+            for (let j = 0; j < 2; j++) {
+              const c = right - j;
+              if (!reserved[r][c]) {
+                let bit = 0;
+                if (bitPos < totalBits) {
+                  bit = (allCw[bitPos >> 3] >> (7 - (bitPos & 7))) & 1;
+                  bitPos++;
+                }
+                if ((r + c) % 2 === 0) bit ^= 1;
+                matrix[r][c] = bit;
+              }
+            }
+          }
+          up = !up;
+        }
+
+        const fmt = 0x77c4;
+        const fCoords1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+        const fCoords2 = [[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
+        for (let i = 0; i < 15; i++) {
+          const b = (fmt >> i) & 1;
+          matrix[fCoords1[i][0]][fCoords1[i][1]] = b;
+          matrix[fCoords2[i][0]][fCoords2[i][1]] = b;
+        }
+        return matrix;
+      }
+
+      function toSVG(url) {
+        const mat = generateMatrix(url);
+        if (!mat) return createPlaceholderQRSVG();
+        const n = mat.length;
+        const quiet = 2;
+        const total = n + quiet * 2;
+        let paths = '';
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (mat[r][c] === 1) {
+              paths += `<rect x="${c + quiet}" y="${r + quiet}" width="1" height="1" fill="#0f172a"/>`;
+            }
+          }
+        }
+        return `<svg viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges" class="w-full h-full" role="img" aria-label="Scannable QR Code for ${url}">
+          <rect width="${total}" height="${total}" fill="#ffffff"/>
+          ${paths}
+        </svg>`;
+      }
+
+      return { toSVG };
+    })();
+
+    function getQRMarkup() {
+      return currentQRUrl ? QRGen.toSVG(currentQRUrl) : createPlaceholderQRSVG();
+    }
+
+    // =========================================================================
+    // 3. 8-PAGE A5 BOOKLET TEMPLATES (Pages 1 to 8, with Hospital Wayfinding!)
+    // =========================================================================
+    const PAGE_TITLES = [
+      '',
+      'Page 1: Front Cover',
+      'Page 2: Before Your Visit & Hospital Signs',
+      'Page 3: During Your Visit & Finding Your Way',
+      'Page 4: Talk Cards',
+      'Page 5: My Hospital Checklist',
+      'Page 6: Easy Information',
+      'Page 7: My Questions and Next Steps',
+      'Page 8: Back Cover'
+    ];
+
+    function renderBookletPageHTML(pageNum, extraClasses = '') {
+      const qrSvg = getQRMarkup();
+
+      // -----------------------------------------------------------------------
+      // PAGE 1: FRONT COVER (Keeps current My Hospital Toolkit design)
+      // -----------------------------------------------------------------------
+      if (pageNum === 1) {
+        return `
+          <div class="a5-page cover-front ${extraClasses}">
+            <div class="text-center space-y-2.5 pt-1">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-white text-blue-700 flex items-center justify-center text-4xl shadow-md border-2 border-blue-200">
+                🏥
+              </div>
+              <div class="inline-block px-3 py-0.5 rounded-full bg-blue-900/60 border border-blue-400/40 text-[10px] font-extrabold uppercase tracking-widest text-blue-100">
+                Accessible Patient Information Booklet
+              </div>
+              <h1 class="text-3xl font-extrabold tracking-tight leading-tight">
+                My Hospital Toolkit
+              </h1>
+              <p class="text-xs sm:text-sm text-blue-100 font-medium leading-snug px-3">
+                Simple steps, hospital wayfinding, communication support, and helpful information
+              </p>
+            </div>
+
+            <!-- Introduction & Overview Card (Preserved Style) -->
+            <div class="bg-white text-slate-900 rounded-2xl p-4 shadow-sm space-y-2.5 border-2 border-blue-200">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-blue-700 uppercase tracking-wide">How This Booklet Helps You</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">No Phone Needed</span>
+              </div>
+              <p class="text-xs text-slate-700 leading-relaxed">
+                This booklet helps you <strong>navigate the hospital easily</strong>, <strong>understand each step</strong> of your visit, <strong>communicate your needs</strong> by pointing to cards, and <strong>prepare for your next steps</strong>.
+              </p>
+              <div class="grid grid-cols-2 gap-2 pt-1 text-xs font-extrabold text-slate-800">
+                <div class="p-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                  <span class="text-base">🧭</span><span>Steps &amp; Wayfinding</span>
+                </div>
+                <div class="p-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                  <span class="text-base">💬</span><span>Talk Cards</span>
+                </div>
+                <div class="p-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                  <span class="text-base">✅</span><span>Checklist</span>
+                </div>
+                <div class="p-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                  <span class="text-base">📖</span><span>Easy Info</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- QR Code Section Linking to Digital Toolkit -->
+            <div class="bg-white text-slate-900 rounded-2xl p-3.5 shadow-md border-2 border-blue-300 flex items-center gap-3.5">
+              <div class="w-24 h-24 flex-shrink-0 bg-white p-1.5 rounded-xl border-2 border-slate-900 flex items-center justify-center">
+                ${qrSvg}
+              </div>
+              <div class="space-y-1 text-left">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-blue-700">Prefer Digital?</div>
+                <div class="text-xs font-extrabold text-slate-900">Scan to Use the Digital Toolkit</div>
+                <p class="text-[11px] text-slate-600 leading-snug">
+                  Scan this code to open My Hospital Toolkit on your phone or tablet for interactive directions, audio read-aloud, and larger text.
+                </p>
+                <div class="pt-0.5">
+                  <span class="text-[10px] font-mono font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block">
+                    ${currentShortUrl}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] font-bold text-blue-100 pt-1">
+              <span>Use this booklet on paper or online</span>
+              <span>Page 1 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 2: BEFORE YOUR HOSPITAL VISIT + HOSPITAL SIGNS VISUAL KEY
+      // -----------------------------------------------------------------------
+      if (pageNum === 2) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-3">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">🎒</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Getting Ready &amp; Wayfinding Signs</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">Before Your Hospital Visit</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 2</span>
+              </div>
+
+              <!-- What to Bring Section -->
+              <div class="space-y-1.5">
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                  <span>📦</span><span>What to Bring With You</span>
+                </h3>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-start gap-2">
+                    <span class="text-xl flex-shrink-0">🪪</span>
+                    <div>
+                      <div class="font-extrabold text-xs text-slate-900">Health Card &amp; ID</div>
+                      <p class="text-[10px] text-slate-600 leading-snug">To check in at reception.</p>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-start gap-2">
+                    <span class="text-xl flex-shrink-0">📅</span>
+                    <div>
+                      <div class="font-extrabold text-xs text-slate-900">Appointment Details</div>
+                      <p class="text-[10px] text-slate-600 leading-snug">Your letter, clinic, or time.</p>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-start gap-2">
+                    <span class="text-xl flex-shrink-0">💊</span>
+                    <div>
+                      <div class="font-extrabold text-xs text-slate-900">Medication List</div>
+                      <p class="text-[10px] text-slate-600 leading-snug">Pills or a list of what you take.</p>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-start gap-2">
+                    <span class="text-xl flex-shrink-0">👓</span>
+                    <div>
+                      <div class="font-extrabold text-xs text-slate-900">Personal Supports</div>
+                      <p class="text-[10px] text-slate-600 leading-snug">Glasses, hearing or mobility aids.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- What to Expect Section -->
+              <div class="space-y-1.5">
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                  <span>🏥</span><span>What to Expect When You Arrive</span>
+                </h3>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded-xl border border-slate-200 bg-slate-50">
+                    <div class="text-xl">👋</div>
+                    <div class="font-extrabold text-[11px] text-slate-900 mt-0.5">Friendly Welcome</div>
+                    <p class="text-[10px] text-slate-600 leading-tight">Staff help you check in &amp; find your way.</p>
+                  </div>
+                  <div class="p-2 rounded-xl border border-slate-200 bg-slate-50">
+                    <div class="text-xl">🪑</div>
+                    <div class="font-extrabold text-[11px] text-slate-900 mt-0.5">Waiting Area</div>
+                    <p class="text-[10px] text-slate-600 leading-tight">Sit comfortably until your name is called.</p>
+                  </div>
+                  <div class="p-2 rounded-xl border border-slate-200 bg-slate-50">
+                    <div class="text-xl">🤝</div>
+                    <div class="font-extrabold text-[11px] text-slate-900 mt-0.5">Ask Questions</div>
+                    <p class="text-[10px] text-slate-600 leading-tight">Point to cards or take your time.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hospital Signs Visual Key (Helps Navigate the Building!) -->
+              <div class="p-3 rounded-2xl border-2 border-blue-300 bg-blue-50/40 space-y-2">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                    <span>🪧</span><span>Hospital Signs to Look For</span>
+                  </h3>
+                  <span class="text-[10px] font-bold text-blue-700">Wayfinding Guide</span>
+                </div>
+                <p class="text-[10px] text-slate-600 leading-tight">
+                  Look for these symbols and color lines on hospital walls and floors:
+                </p>
+                <div class="grid grid-cols-4 gap-1.5 text-center">
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">ℹ️</div>
+                    <div class="text-[9.5px] font-extrabold text-slate-900 leading-tight">Reception</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">🛗</div>
+                    <div class="text-[9.5px] font-extrabold text-slate-900 leading-tight">Elevators</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">🚻</div>
+                    <div class="text-[9.5px] font-extrabold text-slate-900 leading-tight">Restroom</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">🪑</div>
+                    <div class="text-[9.5px] font-extrabold text-slate-900 leading-tight">Waiting</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">🩺</div>
+                    <div class="text-[9.5px] font-extrabold text-blue-700 leading-tight">Blue: Clinics</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">🩸</div>
+                    <div class="text-[9.5px] font-extrabold text-emerald-700 leading-tight">Green: Lab</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">📷</div>
+                    <div class="text-[9.5px] font-extrabold text-amber-700 leading-tight">Amber: X-Ray</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-white border border-slate-200">
+                    <div class="text-lg">💊</div>
+                    <div class="text-[9.5px] font-extrabold text-purple-700 leading-tight">Pharmacy</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>My Hospital Toolkit · Preparation &amp; Signs</span>
+              <span>Page 2 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 3: DURING YOUR HOSPITAL VISIT + "WHERE I NEED TO GO" WAYFINDING PASS
+      // -----------------------------------------------------------------------
+      if (pageNum === 3) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-2">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">👣</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Step-by-Step &amp; Wayfinding</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">During Your Hospital Visit</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 3</span>
+              </div>
+
+              <!-- 4 Connected Steps -->
+              <div class="space-y-1">
+                <!-- Step 1 -->
+                <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/60 flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex-shrink-0 flex flex-col items-center justify-center font-extrabold leading-none">
+                    <span class="text-[8px] uppercase">Step</span>
+                    <span class="text-sm">1</span>
+                  </div>
+                  <span class="text-2xl flex-shrink-0">🪪</span>
+                  <div class="flex-1">
+                    <h3 class="font-extrabold text-xs text-slate-900">Check In at Reception</h3>
+                    <p class="text-[11px] text-slate-700 leading-tight">Show your health card or appointment details at the front desk.</p>
+                  </div>
+                </div>
+
+                <div class="flex justify-center -my-0.5" aria-hidden="true">
+                  <span class="text-xs font-extrabold text-blue-600">↓</span>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/60 flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex-shrink-0 flex flex-col items-center justify-center font-extrabold leading-none">
+                    <span class="text-[8px] uppercase">Step</span>
+                    <span class="text-sm">2</span>
+                  </div>
+                  <span class="text-2xl flex-shrink-0">🧭</span>
+                  <div class="flex-1">
+                    <h3 class="font-extrabold text-xs text-slate-900">Find Your Department</h3>
+                    <p class="text-[11px] text-slate-700 leading-tight">Ask reception to mark your Zone &amp; Floor in the box below, then follow the signs.</p>
+                  </div>
+                </div>
+
+                <div class="flex justify-center -my-0.5" aria-hidden="true">
+                  <span class="text-xs font-extrabold text-blue-600">↓</span>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/60 flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex-shrink-0 flex flex-col items-center justify-center font-extrabold leading-none">
+                    <span class="text-[8px] uppercase">Step</span>
+                    <span class="text-sm">3</span>
+                  </div>
+                  <span class="text-2xl flex-shrink-0">🪑</span>
+                  <div class="flex-1">
+                    <h3 class="font-extrabold text-xs text-slate-900">Wait for Your Appointment</h3>
+                    <p class="text-[11px] text-slate-700 leading-tight">Wait in the designated area until staff call your name.</p>
+                  </div>
+                </div>
+
+                <div class="flex justify-center -my-0.5" aria-hidden="true">
+                  <span class="text-xs font-extrabold text-blue-600">↓</span>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="p-2.5 rounded-xl border-2 border-blue-200 bg-blue-50/60 flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex-shrink-0 flex flex-col items-center justify-center font-extrabold leading-none">
+                    <span class="text-[8px] uppercase">Step</span>
+                    <span class="text-sm">4</span>
+                  </div>
+                  <span class="text-2xl flex-shrink-0">📋</span>
+                  <div class="flex-1">
+                    <h3 class="font-extrabold text-xs text-slate-900">Understand Your Next Steps</h3>
+                    <p class="text-[11px] text-slate-700 leading-tight">Ask about follow-up care and instructions before leaving.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- "Where I Need to Go" Staff Wayfinding Helper Card -->
+              <div class="p-3 rounded-2xl border-2 border-slate-800 bg-amber-50/60 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-extrabold uppercase tracking-wide text-slate-900 flex items-center gap-1.5">
+                    <span>📍</span><span>Where I Need to Go (Ask Reception to Circle)</span>
+                  </div>
+                </div>
+
+                <!-- Color Zone Circle Options -->
+                <div class="grid grid-cols-4 gap-1.5 text-[10px] font-extrabold text-center">
+                  <div class="p-1.5 rounded-lg bg-blue-100 border border-blue-400 text-blue-900">🔵 Blue Zone</div>
+                  <div class="p-1.5 rounded-lg bg-emerald-100 border border-emerald-400 text-emerald-900">🟢 Green Zone</div>
+                  <div class="p-1.5 rounded-lg bg-amber-100 border border-amber-400 text-amber-900">🟡 Amber Zone</div>
+                  <div class="p-1.5 rounded-lg bg-purple-100 border border-purple-400 text-purple-900">🟣 Purple Zone</div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-[10px]">
+                  <div class="bg-white p-1.5 rounded-lg border border-slate-300">
+                    <span class="font-bold text-slate-500 uppercase block">Elevator / Stairs</span>
+                    <div class="h-4 border-b border-dashed border-slate-400 mt-0.5"></div>
+                  </div>
+                  <div class="bg-white p-1.5 rounded-lg border border-slate-300">
+                    <span class="font-bold text-slate-500 uppercase block">Floor Level</span>
+                    <div class="h-4 border-b border-dashed border-slate-400 mt-0.5"></div>
+                  </div>
+                  <div class="bg-white p-1.5 rounded-lg border border-slate-300">
+                    <span class="font-bold text-slate-500 uppercase block">Room / Clinic #</span>
+                    <div class="h-4 border-b border-dashed border-slate-400 mt-0.5"></div>
+                  </div>
+                </div>
+
+                <div class="text-[10px] font-bold text-slate-700 text-center">
+                  👆 <em>If you get lost in the hallway, show this box to any staff member for directions.</em>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>Turn the page for Talk Cards &amp; Checklist ➡</span>
+              <span>Page 3 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 4: TALK CARDS (Point-to-Communicate Grid)
+      // -----------------------------------------------------------------------
+      if (pageNum === 4) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-2.5">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">💬</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Visual Communication Support</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">Talk Cards</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 4</span>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2 text-xs font-bold text-blue-900">
+                <span>👆</span>
+                <span>Point to any card below to show hospital staff what you need:</span>
+              </div>
+
+              <!-- 2x4 Grid of High-Contrast Talk Cards -->
+              <div class="grid grid-cols-2 gap-2.5">
+                ${CARDS.map(c => `
+                  <div class="p-3 rounded-2xl border-2 border-slate-800 bg-white text-center flex flex-col items-center justify-center min-h-[100px] shadow-sm">
+                    <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl mb-1.5">
+                      ${c.icon}
+                    </div>
+                    <div class="font-extrabold text-xs sm:text-sm text-slate-900 leading-tight px-1">
+                      ${c.text}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>🔊 Scan cover QR code to hear cards spoken aloud</span>
+              <span>Page 4 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 5: MY HOSPITAL CHECKLIST (Before My Visit & Before I Leave)
+      // -----------------------------------------------------------------------
+      if (pageNum === 5) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-3">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">✅</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Preparation &amp; Next Steps</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">My Hospital Checklist</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 5</span>
+              </div>
+
+              <p class="text-xs text-slate-600 leading-snug">
+                Mark each large box with a pen (<strong>✓</strong>) as you get ready and before you go home.
+              </p>
+
+              <!-- Section 1: Before My Visit -->
+              <div class="p-3.5 rounded-2xl border-2 border-blue-200 bg-blue-50/50 space-y-2">
+                <div class="flex items-center gap-2 border-b border-blue-200 pb-1.5">
+                  <span class="text-base">🎒</span>
+                  <h3 class="font-extrabold text-xs uppercase tracking-wider text-blue-800">Before My Visit</h3>
+                </div>
+
+                <div class="space-y-2">
+                  ${CHECKS_BEFORE.map(item => `
+                    <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span class="pen-checkbox"></span>
+                      <span class="text-lg flex-shrink-0">${item.icon}</span>
+                      <span class="text-xs font-bold text-slate-900 leading-tight">${item.text}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Section 2: Before I Leave -->
+              <div class="p-3.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 space-y-2">
+                <div class="flex items-center gap-2 border-b border-emerald-200 pb-1.5">
+                  <span class="text-base">🏡</span>
+                  <h3 class="font-extrabold text-xs uppercase tracking-wider text-emerald-800">Before I Leave</h3>
+                </div>
+
+                <div class="space-y-2">
+                  ${CHECKS_LEAVE.map(item => `
+                    <div class="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span class="pen-checkbox"></span>
+                      <span class="text-lg flex-shrink-0">${item.icon}</span>
+                      <span class="text-xs font-bold text-slate-900 leading-tight">${item.text}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>My Hospital Toolkit · Checklist</span>
+              <span>Page 5 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 6: EASY INFORMATION (Short Illustrated Information Cards)
+      // -----------------------------------------------------------------------
+      if (pageNum === 6) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-2.5">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">📖</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Helpful Communication Tips</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">Easy Information</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 6</span>
+              </div>
+
+              <p class="text-xs text-slate-600 leading-snug">
+                Ways you can ask hospital staff for clear information and communication support:
+              </p>
+
+              <div class="space-y-2.5 pt-0.5">
+                ${EASY_INFO.map(info => `
+                  <div class="p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">
+                      ${info.icon}
+                    </div>
+                    <div>
+                      <h3 class="font-extrabold text-xs text-slate-900">${info.title}</h3>
+                      <p class="text-[11px] text-slate-600 leading-snug mt-0.5">
+                        ${info.desc}
+                      </p>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>My Hospital Toolkit · Easy Information</span>
+              <span>Page 6 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 7: MY QUESTIONS AND NEXT STEPS (Write-In Spaces, No Sensitive Info Required)
+      // -----------------------------------------------------------------------
+      if (pageNum === 7) {
+        return `
+          <div class="a5-page ${extraClasses}">
+            <div class="space-y-3">
+              <!-- Page Header -->
+              <div class="flex items-center justify-between border-b-2 border-blue-600 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold">📝</span>
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700">Personal Notes</div>
+                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">My Questions &amp; Next Steps</h2>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-400">Page 7</span>
+              </div>
+
+              <p class="text-xs text-slate-600 leading-snug">
+                Use these optional spaces to jot down questions or next steps. <em>You do not need to write private medical details here.</em>
+              </p>
+
+              <!-- Box 1: Questions I Want to Ask -->
+              <div class="p-3 rounded-2xl border-2 border-blue-200 bg-blue-50/30 space-y-2">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                  <span>❓</span><span>Questions I Want to Ask Today</span>
+                </div>
+                <div class="bg-white rounded-xl p-2.5 border border-slate-300 space-y-4">
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                </div>
+              </div>
+
+              <!-- Box 2: My Next Steps & Follow-Up Instructions -->
+              <div class="p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 space-y-2">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <span>👣</span><span>Follow-Up Instructions &amp; Next Steps (Optional)</span>
+                </div>
+                <div class="bg-white rounded-xl p-2.5 border border-slate-300 space-y-4">
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                  <div class="border-b border-dashed border-slate-300 h-4"></div>
+                </div>
+              </div>
+
+              <!-- Box 3: Contact Information -->
+              <div class="p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 space-y-2">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <span>📞</span><span>Clinic / Support Contact Information (Optional)</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="bg-white rounded-xl p-2 border border-slate-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Department / Name</div>
+                    <div class="h-5 border-b border-dashed border-slate-300 mt-1"></div>
+                  </div>
+                  <div class="bg-white rounded-xl p-2 border border-slate-300">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Phone / Hours</div>
+                    <div class="h-5 border-b border-dashed border-slate-300 mt-1"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>Tip: You can ask staff to help fill in your next steps</span>
+              <span>Page 7 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // -----------------------------------------------------------------------
+      // PAGE 8: BACK COVER (Summary, Repeated QR Code, Staff Assistance Reminder)
+      // -----------------------------------------------------------------------
+      if (pageNum === 8) {
+        return `
+          <div class="a5-page bg-slate-50 ${extraClasses}">
+            <div class="space-y-3.5">
+              <!-- Back Cover Top Brand Banner -->
+              <div class="p-4 rounded-2xl bg-blue-700 text-white text-center space-y-1.5 shadow-sm">
+                <div class="w-11 h-11 mx-auto rounded-xl bg-white text-blue-700 flex items-center justify-center text-2xl font-bold">
+                  🏥
+                </div>
+                <h2 class="text-lg font-extrabold tracking-tight">My Hospital Toolkit</h2>
+                <p class="text-xs text-blue-100 leading-snug">
+                  Making hospital navigation and information easier—on paper and online.
+                </p>
+              </div>
+
+              <!-- Short Explanation of the Unified Toolkit -->
+              <div class="p-3.5 rounded-2xl bg-white border-2 border-slate-200 space-y-1.5">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-blue-700">About This Toolkit</div>
+                <p class="text-xs text-slate-700 leading-relaxed">
+                  <strong>My Hospital Toolkit</strong> supports clear wayfinding and communication before, during, and after your appointment. Keep this booklet with your visit papers or share it with your support person.
+                </p>
+              </div>
+
+              <!-- Reminder to Ask Hospital Staff for Assistance -->
+              <div class="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-start gap-3">
+                <span class="text-2xl flex-shrink-0">🙋</span>
+                <div>
+                  <div class="font-extrabold text-xs text-emerald-950">Need Directions or Assistance?</div>
+                  <p class="text-xs text-emerald-900 leading-snug mt-0.5">
+                    Please ask any receptionist, volunteer, nurse, or staff member for help. You can show them your Page 3 destination box or any Talk Card in this booklet.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Repeated QR Code for Optional Digital Access -->
+              <div class="p-4 rounded-2xl bg-white border-2 border-blue-400 text-center space-y-2 shadow-sm">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-blue-700">
+                  Prefer Digital?
+                </div>
+                <div class="text-xs font-extrabold text-slate-900">
+                  Scan to Open the Digital Toolkit &amp; Wayfinding Map
+                </div>
+
+                <div class="w-28 h-28 mx-auto bg-white p-2 rounded-xl border-2 border-slate-900 flex items-center justify-center">
+                  ${qrSvg}
+                </div>
+
+                <p class="text-[11px] text-slate-600 leading-snug px-2">
+                  Includes interactive step-by-step directions, audio Read-Aloud, adjustable large text, and high-contrast mode.
+                </p>
+
+                <div>
+                  <span class="text-[10px] font-mono font-bold text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200 inline-block">
+                    ${currentShortUrl}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Back Cover Footer -->
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>My Hospital Toolkit · Back Cover</span>
+              <span>Page 8 of 8</span>
+            </div>
+          </div>
+        `;
+      }
+      return '';
+    }
+
+    // =========================================================================
+    // 4. INTERACTIVE FLIPBOOK VIEWER (Facing Spreads on Desktop, 1-Up on Mobile)
+    // =========================================================================
+    const DESKTOP_SPREADS = [
+      { pages: [1], label: 'Page 1 of 8 — Front Cover', short: 'Cover (1)' },
+      { pages: [2, 3], label: 'Pages 2–3 — Before Your Visit, Hospital Signs & Wayfinding Steps', short: 'Pages 2–3' },
+      { pages: [4, 5], label: 'Pages 4–5 — Talk Cards & My Hospital Checklist', short: 'Pages 4–5' },
+      { pages: [6, 7], label: 'Pages 6–7 — Easy Information & My Questions', short: 'Pages 6–7' },
+      { pages: [8], label: 'Page 8 of 8 — Back Cover', short: 'Back (8)' }
+    ];
+
+    let forceSinglePageOnDesktop = false;
+    let currentSpreadIndex = 0;
+    let currentSinglePage = 1;
+
+    function isSinglePageActive() {
+      return forceSinglePageOnDesktop || window.innerWidth < 768;
+    }
+
+    function toggleSinglePageMode() {
+      forceSinglePageOnDesktop = !forceSinglePageOnDesktop;
+      const labelEl = document.getElementById('layout-mode-label');
+      labelEl.textContent = forceSinglePageOnDesktop ? 'View: Single Page' : 'View: Facing Pages';
+      if (forceSinglePageOnDesktop) {
+        currentSinglePage = DESKTOP_SPREADS[currentSpreadIndex].pages[0];
+      } else {
+        if (currentSinglePage === 1) currentSpreadIndex = 0;
+        else if (currentSinglePage <= 3) currentSpreadIndex = 1;
+        else if (currentSinglePage <= 5) currentSpreadIndex = 2;
+        else if (currentSinglePage <= 7) currentSpreadIndex = 3;
+        else currentSpreadIndex = 4;
+      }
+      renderInteractiveFlipbook();
+    }
+
+    function flipBooklet(delta) {
+      if (isSinglePageActive()) {
+        currentSinglePage = Math.max(1, Math.min(8, currentSinglePage + delta));
+      } else {
+        currentSpreadIndex = Math.max(0, Math.min(DESKTOP_SPREADS.length - 1, currentSpreadIndex + delta));
+      }
+      renderInteractiveFlipbook();
+    }
+
+    function jumpToBookletTarget(idx) {
+      if (isSinglePageActive()) {
+        currentSinglePage = idx;
+      } else {
+        currentSpreadIndex = idx;
+      }
+      renderInteractiveFlipbook();
+    }
+
+    function renderInteractiveFlipbook() {
+      const stage = document.getElementById('flipbook-stage-container');
+      const indicators = document.getElementById('booklet-page-indicators');
+      const caption = document.getElementById('flipbook-caption');
+      const prevBtn = document.getElementById('btn-flip-prev');
+      const nextBtn = document.getElementById('btn-flip-next');
+
+      if (isSinglePageActive()) {
+        prevBtn.disabled = currentSinglePage === 1;
+        nextBtn.disabled = currentSinglePage === 8;
+        caption.textContent = `${PAGE_TITLES[currentSinglePage]} (Page ${currentSinglePage} of 8)`;
+
+        indicators.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(p => `
+          <button onclick="jumpToBookletTarget(${p})" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition ${
+            p === currentSinglePage
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
+          }">Pg ${p}</button>
+        `).join('');
+
+        stage.innerHTML = `
+          <div class="book-spread-container">
+            ${renderBookletPageHTML(currentSinglePage)}
+          </div>
+        `;
+      } else {
+        const spread = DESKTOP_SPREADS[currentSpreadIndex];
+        prevBtn.disabled = currentSpreadIndex === 0;
+        nextBtn.disabled = currentSpreadIndex === DESKTOP_SPREADS.length - 1;
+        caption.textContent = spread.label;
+
+        indicators.innerHTML = DESKTOP_SPREADS.map((sp, idx) => `
+          <button onclick="jumpToBookletTarget(${idx})" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition ${
+            idx === currentSpreadIndex
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
+          }">${sp.short}</button>
+        `).join('');
+
+        if (spread.pages.length === 1) {
+          stage.innerHTML = `
+            <div class="book-spread-container">
+              ${renderBookletPageHTML(spread.pages[0])}
+            </div>
+          `;
+        } else {
+          stage.innerHTML = `
+            <div class="book-spread-container">
+              ${renderBookletPageHTML(spread.pages[0], 'page-left-shadow')}
+              <div class="spine-divider" aria-hidden="true"></div>
+              ${renderBookletPageHTML(spread.pages[1], 'page-right-shadow')}
+            </div>
+          `;
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      renderInteractiveFlipbook();
+    });
+
+    // =========================================================================
+    // 5. PRINT & IMPOSITION RENDERER (A4 Saddle-Stitch + Sequential A5)
+    // =========================================================================
+    const IMPOSED_SPREADS = [
+      { left: 8, right: 1, title: 'Sheet 1 — Front Side (Left: Page 8 Back Cover | Right: Page 1 Front Cover)' },
+      { left: 2, right: 7, title: 'Sheet 1 — Back Side (Left: Page 2 Before Visit & Signs | Right: Page 7 My Questions)' },
+      { left: 6, right: 3, title: 'Sheet 2 — Front Side (Left: Page 6 Easy Info | Right: Page 3 During Visit & Wayfinding)' },
+      { left: 4, right: 5, title: 'Sheet 2 — Back Side / Centerfold (Left: Page 4 Talk Cards | Right: Page 5 Checklist)' }
+    ];
+
+    function renderAllPrintContainers() {
+      const imposedContainer = document.getElementById('imposed-a4-print-container');
+      imposedContainer.innerHTML = IMPOSED_SPREADS.map(sp => `
+        <div class="print-page-break space-y-1.5">
+          <div class="no-print flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-slate-600 px-1">
+            <span>🖨️ ${sp.title}</span>
+            <span>A4 Landscape (297 × 210 mm · Fold down center)</span>
+          </div>
+          <div class="a4-imposed-sheet shadow-xl border border-slate-300">
+            ${renderBookletPageHTML(sp.left, 'center-fold-line')}
+            ${renderBookletPageHTML(sp.right)}
+          </div>
+        </div>
+      `).join('');
+
+      const seqContainer = document.getElementById('sequential-a5-print-container');
+      seqContainer.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(p => `
+        <div class="print-page-break space-y-1.5">
+          <div class="no-print flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-slate-600 px-1">
+            <span>📄 ${PAGE_TITLES[p]}</span>
+            <span>A5 Portrait (148 × 210 mm)</span>
+          </div>
+          <div class="shadow-xl border border-slate-300 inline-block">
+            ${renderBookletPageHTML(p)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setPrintLayoutMode(mode) {
+      const imposedBtn = document.getElementById('btn-printmode-imposed');
+      const a5Btn = document.getElementById('btn-printmode-a5');
+      const imposedContainer = document.getElementById('imposed-a4-print-container');
+      const seqContainer = document.getElementById('sequential-a5-print-container');
+      const explainer = document.getElementById('imposition-explainer');
+
+      document.body.classList.remove('print-mode-imposed', 'print-mode-a5');
+      if (mode === 'imposed') {
+        document.body.classList.add('print-mode-imposed');
+        imposedContainer.classList.remove('hidden');
+        seqContainer.classList.add('hidden');
+        explainer.classList.remove('hidden');
+        imposedBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 text-white';
+        a5Btn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-700 hover:bg-slate-200';
+      } else {
+        document.body.classList.add('print-mode-a5');
+        imposedContainer.classList.add('hidden');
+        seqContainer.classList.remove('hidden');
+        explainer.classList.add('hidden');
+        a5Btn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 text-white';
+        imposedBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-700 hover:bg-slate-200';
+      }
+    }
+
+    function printBookletNow(mode = 'imposed') {
+      setPrintLayoutMode(mode);
+      window.print();
+    }
+
+    // =========================================================================
+    // 6. TOP-LEVEL VIEW SWITCHER & QR CONFIGURATION HANDLERS
+    // =========================================================================
+    function switchMainView(view) {
+      ['booklet-preview', 'print-sheets', 'digital'].forEach(v => {
+        document.getElementById('mode-' + v).classList.toggle('hidden', v !== view);
+        const btn = document.getElementById('nav-btn-' + v);
+        if (v === view) {
+          btn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white flex items-center gap-2 transition shadow-sm';
+        } else {
+          btn.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-600 flex items-center gap-2 transition';
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateQRConfiguration() {
+      currentQRUrl = document.getElementById('qr-url-input').value.trim();
+      currentShortUrl = document.getElementById('qr-short-input').value.trim() || '[your-hospital-url]/toolkit';
+      renderInteractiveFlipbook();
+      renderAllPrintContainers();
+    }
+
+    function useCurrentBrowserUrl() {
+      const currentUrl = window.location.origin + window.location.pathname;
+      document.getElementById('qr-url-input').value = currentUrl;
+      document.getElementById('qr-short-input').value = currentUrl.replace(/^https?:\/\//, '');
+      updateQRConfiguration();
+    }
+
+    function clearQRUrl() {
+      document.getElementById('qr-url-input').value = '';
+      document.getElementById('qr-short-input').value = '[your-hospital-url]/toolkit';
+      updateQRConfiguration();
+    }
+
+    // =========================================================================
+    // 7. DIGITAL TOOLKIT + INTERACTIVE WAYFINDING LOGIC
+    // =========================================================================
+    function speak(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+
+    function showTab(tab) {
+      ['guide', 'wayfinding', 'cards', 'checklist', 'info'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+          btn.className = 'p-3 rounded-xl border-2 border-blue-600 bg-blue-600 text-white font-bold text-left';
+        } else {
+          btn.className = 'card p-3 rounded-xl border-2 border-slate-300 bg-white font-bold text-left hover:border-blue-400';
+        }
+      });
+    }
+
+    let stepIdx = 0;
+
+    function renderStep() {
+      const s = STEPS[stepIdx];
+      document.getElementById('step-count').textContent = `Step ${stepIdx + 1} of ${STEPS.length}`;
+      document.getElementById('step-icon').textContent = s.icon;
+      document.getElementById('step-title').textContent = `${stepIdx + 1}. ${s.title}`;
+      document.getElementById('step-desc').textContent = s.desc;
+      document.getElementById('btn-prev').disabled = stepIdx === 0;
+      document.getElementById('btn-next').textContent = stepIdx === STEPS.length - 1 ? 'Start Over ↺' : 'Next ➡';
+
+      // Show Wayfinding shortcut button when on Step 2 (Find Your Department)
+      document.getElementById('step-wayfinding-callout').classList.toggle('hidden', stepIdx !== 1);
+
+      document.getElementById('digital-step-dots').innerHTML = STEPS.map((item, idx) => `
+        <button onclick="goToDigitalStep(${idx})" class="w-9 h-9 rounded-full font-extrabold text-sm flex items-center justify-center transition ${
+          idx === stepIdx
+            ? 'bg-blue-600 text-white ring-4 ring-blue-200'
+            : idx < stepIdx
+            ? 'bg-emerald-600 text-white'
+            : 'bg-slate-200 text-slate-700'
+        }">${idx + 1}</button>
+        ${idx < STEPS.length - 1 ? '<span class="text-slate-400 font-bold">→</span>' : ''}
+      `).join('');
+    }
+
+    function goToDigitalStep(idx) {
+      stepIdx = idx;
+      renderStep();
+    }
+
+    function changeStep(dir) {
+      stepIdx = (stepIdx + dir + STEPS.length) % STEPS.length;
+      renderStep();
+    }
+
+    function speakStep() {
+      const s = STEPS[stepIdx];
+      speak(`Step ${stepIdx + 1}: ${s.title}. ${s.desc}`);
+    }
+
+    // Digital Wayfinding Interactive Logic
+    let activeZoneIdx = 0;
+
+    function renderWayfinding() {
+      const z = WAYFINDING_ZONES[activeZoneIdx];
+
+      document.getElementById('wayfinding-dest-buttons').innerHTML = WAYFINDING_ZONES.map((item, idx) => `
+        <button onclick="selectWayfindingZone(${idx})" class="card p-3.5 rounded-2xl border-2 text-left transition flex items-start gap-3 ${
+          idx === activeZoneIdx
+            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
+            : 'border-slate-200 bg-white hover:border-blue-400'
+        }">
+          <span class="text-3xl flex-shrink-0">${item.icon}</span>
+          <div>
+            <div class="text-xs font-extrabold text-blue-700 subtext">${item.zoneBadge}</div>
+            <div class="font-extrabold text-sm sm:text-base leading-snug">${item.name}</div>
+            <div class="text-xs text-slate-500 subtext">${item.floor}</div>
+          </div>
+        </button>
+      `).join('');
+
+      document.getElementById('wayfinding-route-display').innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 pb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-2xl bg-white border-2 border-blue-300 flex items-center justify-center text-4xl shadow-sm">
+              ${z.icon}
+            </div>
+            <div>
+              <div class="inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-white border border-slate-300 text-slate-900 mb-0.5">
+                ${z.zoneBadge} · ${z.floor} · Near ${z.landmark}
+              </div>
+              <h3 class="text-xl sm:text-2xl font-extrabold">${z.name}</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Simple Visual Wayfinding Steps -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          ${z.steps.map((st, i) => `
+            <div class="card bg-white p-3.5 rounded-xl border-2 border-slate-200 flex items-start gap-2.5">
+              <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                ${i + 1}
+              </span>
+              <p class="text-sm font-bold leading-snug">${st}</p>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Ask Staff for Directions Banner -->
+        <div class="card bg-white p-3.5 rounded-xl border-2 border-amber-400 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">👆</span>
+            <div>
+              <div class="text-xs font-extrabold uppercase text-amber-800 subtext">Show or Speak to Staff in the Hallway</div>
+              <div class="font-extrabold text-sm sm:text-base">"${z.askPhrase}"</div>
+            </div>
+          </div>
+          <button onclick="speak('${z.askPhrase.replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-xs sm:text-sm">
+            🔊 Ask Out Loud
+          </button>
+        </div>
+      `;
+
+      document.getElementById('wayfinding-signs-grid').innerHTML = HOSPITAL_SIGNS.map(sg => `
+        <button onclick="speak('${sg.label}. ${sg.desc}')" class="card p-3.5 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-blue-500 text-center space-y-1 transition">
+          <div class="text-3xl">${sg.icon}</div>
+          <div class="font-extrabold text-sm">${sg.label}</div>
+          <p class="text-xs text-slate-600 subtext leading-snug">${sg.desc}</p>
+        </button>
+      `).join('');
+    }
+
+    function selectWayfindingZone(idx) {
+      activeZoneIdx = idx;
+      renderWayfinding();
+    }
+
+    function speakActiveWayfinding() {
+      const z = WAYFINDING_ZONES[activeZoneIdx];
+      speak(`Directions to ${z.name}. ${z.zoneBadge}, ${z.floor}. Step 1: ${z.steps[0]} Step 2: ${z.steps[1]} Step 3: ${z.steps[2]}`);
+    }
+
+    let activeCardText = 'Tap any card below to speak';
+
+    function renderCards() {
+      document.getElementById('cards-grid').innerHTML = CARDS.map((c, idx) => `
+        <button onclick="selectCard(${idx})" class="card p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-blue-500 text-center space-y-2 transition shadow-sm">
+          <div class="text-5xl">${c.icon}</div>
+          <div class="font-bold text-base sm:text-lg leading-snug">${c.text}</div>
+        </button>
+      `).join('');
+    }
+
+    function selectCard(idx) {
+      const c = CARDS[idx];
+      activeCardText = c.text;
+      document.getElementById('banner-icon').textContent = c.icon;
+      document.getElementById('banner-text').textContent = c.text;
+      speak(c.text);
+    }
+
+    function speakCurrentCard() {
+      speak(activeCardText);
+    }
+
+    function renderChecklist() {
+      document.getElementById('checklist-before-list').innerHTML = CHECKS_BEFORE.map((item, i) => `
+        <button onclick="toggleCheck('before', ${i})" class="card w-full p-4 rounded-xl border-2 ${item.done ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'} flex items-center gap-4 text-left transition">
+          <div class="w-8 h-8 rounded-lg border-2 flex items-center justify-center font-bold text-lg flex-shrink-0 ${item.done ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300'}">
+            ${item.done ? '✓' : ''}
+          </div>
+          <span class="text-3xl">${item.icon}</span>
+          <span class="font-bold text-lg ${item.done ? 'line-through opacity-60' : ''}">${item.text}</span>
+        </button>
+      `).join('');
+
+      document.getElementById('checklist-leave-list').innerHTML = CHECKS_LEAVE.map((item, i) => `
+        <button onclick="toggleCheck('leave', ${i})" class="card w-full p-4 rounded-xl border-2 ${item.done ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'} flex items-center gap-4 text-left transition">
+          <div class="w-8 h-8 rounded-lg border-2 flex items-center justify-center font-bold text-lg flex-shrink-0 ${item.done ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300'}">
+            ${item.done ? '✓' : ''}
+          </div>
+          <span class="text-3xl">${item.icon}</span>
+          <span class="font-bold text-lg ${item.done ? 'line-through opacity-60' : ''}">${item.text}</span>
+        </button>
+      `).join('');
+    }
+
+    function toggleCheck(group, i) {
+      if (group === 'before') {
+        CHECKS_BEFORE[i].done = !CHECKS_BEFORE[i].done;
+      } else {
+        CHECKS_LEAVE[i].done = !CHECKS_LEAVE[i].done;
+      }
+      renderChecklist();
+    }
+
+    function renderEasyInfo() {
+      document.getElementById('digital-info-list').innerHTML = EASY_INFO.map((item, idx) => `
+        <div class="card flex items-center justify-between gap-4 p-4 rounded-xl border-2 border-slate-200 bg-slate-50">
+          <div class="flex items-center gap-4">
+            <div class="text-4xl flex-shrink-0 w-14 text-center">${item.icon}</div>
+            <div>
+              <h3 class="font-bold text-lg">${item.title}</h3>
+              <p class="text-slate-600 subtext text-sm sm:text-base">${item.desc}</p>
+            </div>
+          </div>
+          <button onclick="speakEasyInfoItem(${idx})" class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex-shrink-0">
+            🔊 Listen
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function speakEasyInfoItem(idx) {
+      const item = EASY_INFO[idx];
+      speak(`${item.title}. ${item.desc}`);
+    }
+
+    function speakEasyInfo() {
+      speak(EASY_INFO.map(i => `${i.title}. ${i.desc}`).join(' '));
+    }
+
+    // Initialize everything on load
+    renderStep();
+    renderWayfinding();
+    renderCards();
+    renderChecklist();
+    renderEasyInfo();
+    renderInteractiveFlipbook();
+    renderAllPrintContainers();
+  </script>
+</body>
+</html>
